@@ -1,54 +1,77 @@
-# Crypto Community Telegram Bot
+# Community Telegram Bot
 
-This repository contains the source code for a Telegram bot developed using the Telegram Bot API and the python-telegram-bot library.
+Python Telegram bot for lightweight community moderation. The bot watches membership changes, welcomes new users, and temporarily bans new members who do not send a message within 60 seconds.
 
-## Description
+## What the bot does
 
-The Telegram bot implemented in this project is designed to perform various tasks within Telegram chats and groups. It includes features such as:
+- Tracks where the bot is installed across private chats, groups, and channels.
+- Welcomes newly added group members.
+- Schedules a temporary ban for new members who stay silent after joining.
+- Cancels the pending ban as soon as the new member sends any text message.
+- Sends formatted exception reports to a developer account.
+- Exposes a `/show_chats` command to list the chat IDs currently seen by the bot.
 
-- Tracking chat membership changes
-- Greeting new members and handling member departures
-- Managing chat memberships and interactions
-- Handling errors and logging
+## Stack
 
-## Features
+- Python
+- `python-telegram-bot==13.5`
+- APScheduler via the Telegram job queue
 
-- **Track Chats**: The bot tracks changes in chat membership and logs events such as adding or removing the bot from chats.
+## Project layout
 
-- **Greet Chat Members**: The bot welcomes new members to chats and takes action based on user interactions.
+- `main.py`: bot startup, handlers, moderation flow, and error reporting
+- `requirements.txt`: Python dependencies
+- `Procfile`: process definition for platform deployment
+- `secrets.json`: local runtime configuration file expected by the app
 
-- **Error Handling**: Error handling is implemented to log exceptions and notify developers about issues encountered during bot operation.
+## Configuration
 
-## Usage
-
-To use the bot, you need to create a `secrets.json` file containing the bot's API token and other sensitive information. The file should be structured as follows:
+Create a `secrets.json` file in the repository root:
 
 ```json
 {
   "secrets": {
-    "BOT_API_TOKEN": "YOUR_BOT_API_TOKEN",
-    "DEV_USER": "YOUR_TELEGRAM_USER_ID",
-    "CHAT_HANDLE": "YOUR_TELEGRAM_CHAT_HANDLE"
+    "BOT_API_TOKEN": "telegram-bot-token",
+    "DEV_USER": 123456789,
+    "CHAT_HANDLE": -1000000000000
   }
 }
 ```
 
-Replace "YOUR_BOT_API_TOKEN", "YOUR_TELEGRAM_USER_ID", and "YOUR_TELEGRAM_CHAT_HANDLE" with your actual bot API token, your Telegram user ID for receiving error notifications, and your Telegram chat handle, respectively.
+Notes:
 
-## Installation
+- `BOT_API_TOKEN` is the Telegram bot token from BotFather.
+- `DEV_USER` is the Telegram user ID that receives stack traces.
+- `CHAT_HANDLE` is used when kicking users; in practice this should be the target group or supergroup chat ID.
+
+## Run locally
 
 ```bash
-git clone https://github.com/gargmegham/CommunityTelegramBot.git
-cd CommunityTelegramBot
+python -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
-python bot.py
+python main.py
 ```
+
+The bot uses long polling, so no webhook setup is required.
+
+## Behavior notes
+
+- New members get 60 seconds to introduce themselves.
+- If they do not send a text message, the bot bans them for 24 hours.
+- Any text message from the pending user cancels the scheduled removal job.
+- Chat membership tracking is stored in memory, so it resets when the process restarts.
+
+## Limitations
+
+- There is no persistence layer for tracked chat IDs or moderation history.
+- The moderation flow assumes a single target chat for kicking members.
+- The repository currently includes a committed `secrets.json`; treat real credentials as sensitive and keep them out of version control.
 
 ## Contributing
 
-Contributions to this repository are welcome! If you have suggestions for improvements or new features, feel free to open an issue or submit a pull request & use [contribution guidelines](CONTRIBUTING.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
-You can customize this README according to your specific project details and requirements.
+MIT. See [LICENSE](LICENSE).
